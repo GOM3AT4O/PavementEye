@@ -68,6 +68,40 @@ services:
       - kafka-spark-network
     depends_on:
       - kafka
+
+  # Spark Master (optional - if you want a Spark cluster)
+  spark-master:
+    image: bitnamilegacy/spark:latest
+    container_name: spark-master
+    ports:
+      - "7077:7077"
+      - "8081:8081"
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    networks:
+      - kafka-spark-network
+
+  # Spark Worker (optional)
+  spark-worker:
+    image: bitnamilegacy/spark:latest
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    networks:
+      - kafka-spark-network
   
   # Cassandra Service
   cassandra:
