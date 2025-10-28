@@ -7,7 +7,6 @@ from azure.storage.blob import BlobServiceClient
 import cv2
 from dotenv import load_dotenv
 import os
-from ultralytics import YOLO
 
 # Global styles -------------------------------------------------------------------
 st.set_page_config(layout="wide")
@@ -60,8 +59,6 @@ account_key = os.getenv("account_key")
 connection_string = f"DefaultEndpointsProtocol=https;AccountName={account_name};AccountKey={account_key};EndpointSuffix=core.windows.net"
 file_system_name = os.getenv("file_system_name")
 
-model = YOLO("../models/fine_tunning/runs/main_trainging/yolov8s/weights/best.pt")
-
 if image_name:
     try:
         # Connect to Azure Blob
@@ -71,20 +68,37 @@ if image_name:
         # Download image
         image_data = blob_client.download_blob().readall()
         nparr = np.frombuffer(image_data, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # BGR format
+        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-        # Run YOLO inference (exactly the same weights in backend)
-        results = model.predict(source=image, conf=0.25, save=False)
+        # get detections of this image only (saved in cassandra)
+        # image name is unique (lat,lon,timestamp)
+        detections = data[data['image'] == image_name][['x1','x2','y1','y2','label','confidence']]
 
-        # Annotate image
-        annotated_image = results[0].plot()  # results[0] is the first image in results
+        # draw bounding boxes
+        img_annotated = image.copy()
+        for _, row in detections.iterrows():
+            x1, x2, y1, y2 = int(row["x1"]), int(row["x2"]), int(row["y1"]), int(row["y2"])
+            label = row.get("label", "unknown")
+            conf = row.get("confidence", None)
 
-        # Convert BGR to RGB for Streamlit
-        annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
+            color = (0, 255, 0)  # Default color (green)
+            cv2.rectangle(img_annotated, (x1, y1), (x2, y2), color, 2)
 
-        cols = st.columns([1, 2, 1])  # Left, center, right columns
-        with cols[1]:  # Put image in the middle column
-          st.image(annotated_image, caption=f"YOLO Predictions: {image_name}", width=400)
+            # Label text
+            text = f"{label}"
+            if conf is not None:
+                text += f" ({conf:.2f})"
+
+            (tw, th), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            cv2.rectangle(img_annotated, (x1, y1 - th - 4), (x1 + tw, y1), color, -1)
+            cv2.putText(img_annotated, text, (x1, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+
+        # Convert to RGB and display
+        img_rgb = cv2.cvtColor(img_annotated, cv2.COLOR_BGR2RGB)
+
+        cols = st.columns([1, 2, 1])
+        with cols[1]:
+            st.image(img_rgb, caption=f"Detections for {image_name}", width=500)
 
     except Exception as e:
         st.error(f"Could not load image: {e}")
