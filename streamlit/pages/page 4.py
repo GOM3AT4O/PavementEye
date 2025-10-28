@@ -18,7 +18,7 @@ local_css("./style.css")
 cmap = plt.get_cmap('Dark2')
 # ---------------------------------------------------------------------------------
 
-st.title("Historical PCI (Pavement Condition index)")
+st.title("📈 Historical PCI (Pavement Condition index)")
 
 cassandra = Cassandra()
 cassandra.exec("SELECT x1,x2,y1,y2, road_index, label, ppm, timestamp FROM crack")

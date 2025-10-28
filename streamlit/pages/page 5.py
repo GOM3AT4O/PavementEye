@@ -25,7 +25,7 @@ col1, col2 = st.columns([2, 1])
 
 with col1:
 
-  st.markdown("##### Comparison between different road speeds")
+  st.markdown("##### 🚦 Comparison between different road speeds")
 
   cracks_df = cracks_df[cracks_df['maxspeed'] > 0]
 
@@ -72,38 +72,39 @@ with col1:
 # ------------------------------------------------------------------------------------------
 
 with col2:
-  st.markdown("##### One way roads vs both")
+  st.markdown("##### 🔄 One way roads vs both")
   df = cassandra.data
 
-  oneway_B = df[df['oneway'] == 'B'].groupby(['label']).size()
-  oneway_F = df[df['oneway'] == 'F'].groupby(['label']).size()
+  oneway_B = df[df['oneway'] == 'B'].groupby('label').size()
+  oneway_F = df[df['oneway'] == 'F'].groupby('label').size()
+  
 
-  categories_B = df[df['oneway'] == 'B']['label'].unique()
-  categories_F = df[df['oneway'] == 'F']['label'].unique()
+  categories_B = oneway_B.index
+  categories_F = oneway_F.index
 
   fig = go.Figure()
 
   fig.add_trace(go.Scatterpolar(
-        r=oneway_B.values,
-        theta=categories_B,
-        fill='toself',
-        name='Both',
+      r=oneway_B.values,
+      theta=categories_B,
+      fill='toself',
+      name='Both',
   ))
   fig.add_trace(go.Scatterpolar(
-        r=oneway_F.values,
-        theta=categories_F,
-        fill='toself',
-        name='False'
+      r=oneway_F.values,
+      theta=categories_F,
+      fill='toself',
+      name='False'
   ))
 
-
   fig.update_layout(
-    polar=dict(
-      radialaxis=dict(
-        visible=True,
-        range=[0, 5]
-      )),
-    showlegend=False
+      polar=dict(
+          radialaxis=dict(
+              visible=True,
+              range=[0, max(max(oneway_B.values), max(oneway_F.values)) + 1]
+          )
+      ),
+      showlegend=True
   )
 
   st.plotly_chart(fig, use_container_width=True)

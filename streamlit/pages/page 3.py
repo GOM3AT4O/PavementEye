@@ -5,6 +5,7 @@ import plotly.express as px
 import pandas as pd
 import numpy as np
 
+
 # Global styles -------------------------------------------------------------------
 st.set_page_config(layout="wide")
 
@@ -18,7 +19,7 @@ local_css("./style.css")
 cmap = plt.get_cmap('Dark2')
 # ---------------------------------------------------------------------------------
 
-st.title("Percentage of each crack type for different road types")
+st.title("🌉 Percentage of each crack type for different road structures")
 st.markdown("""
 Normal road means road that is not tunnel or bridge.
 """)
@@ -27,10 +28,10 @@ cassandra = Cassandra()
 cassandra.exec("SELECT road_index, label FROM crack")
 df = cassandra.join_roads()
 
-bridge = df[df['bridge'] == 'T'].groupby(['label']).size().rename('count')
-tunnel = df[df['tunnel'] == 'T'].groupby(['label']).size().rename('count')
+bridge = df[df['bridge'] == 'T'].groupby(['label']).size().rename('count').sort_values()
+tunnel = df[df['tunnel'] == 'T'].groupby(['label']).size().rename('count').sort_values()
 
-normal = df[(df['bridge'] == 'F') & (df['bridge'] == 'F')].groupby(['label']).size().rename('count')
+normal = df[(df['bridge'] == 'F') & (df['bridge'] == 'F')].groupby(['label']).size().rename('count').sort_values()
 
 colors1 = cmap(np.linspace(0, 1, len(bridge.index)))
 colors2 = cmap(np.linspace(0, 1, len(tunnel.index)))
@@ -101,7 +102,7 @@ with col1:
         x='pci',
         hover_data=['name', 'pci', 'fclass'],
         labels={'name': 'Street (road_index)', 'pci': 'PCI', 'fclass': 'Road Type'},
-        title='Top 10 damaged streets (based on PCI)',
+        title='🚧 Top 10 damaged streets (based on PCI)',
         color_discrete_sequence=px.colors.qualitative.Dark2
     )
 
@@ -143,7 +144,7 @@ with col2:
         x='Count',
         color='Crack Type',
         color_discrete_sequence=px.colors.qualitative.Dark2,
-        title='Crack Types for the top 10 damaged roads',
+        title='🛠️ Crack Types for the top 10 damaged roads',
         labels={'name': 'Road Name (road_index)', 'Count': 'Number of Cracks'},
     )
 

@@ -20,7 +20,7 @@ cassandra = Cassandra()
 cassandra.exec("SELECT lon, lat, confidence FROM crack")
 data = cassandra.data
 
-st.title("Cracks heatmap")
+st.title("🌡️ Cracks heatmap")
 
 view_state = pdk\
 .ViewState(
@@ -53,21 +53,55 @@ deck = pdk.Deck(
 )
 st.pydeck_chart(deck)
 # -----------------------------------------------------------------------------------------------
-st.title("Roads PCI")
+st.title("🗺️ Roads PCI Map")
 
 cassandra.exec("SELECT x1,x2,y1,y2, road_index, label, ppm FROM crack")
 cassandra.join_roads()
 cassandra.calc_pci()
 data = cassandra.data
 
-data["color"] = data["condition"].map({
-    "Excellent": [0, 255, 0],        # Bright neon green
-    "Good": [0, 200, 255],           # Cyan / bright sky blue
-    "Fair": [255, 255, 0],           # Pure yellow
-    "Poor": [255, 165, 0],           # Bright orange
-    "Very Poor": [255, 0, 255],      # Magenta (very visible)
-    "Failed": [255, 0, 0],           # Bright red
-})
+color_map = {
+    "Excellent": [0, 255, 0],
+    "Good": [0, 200, 255],
+    "Fair": [255, 255, 0],
+    "Poor": [255, 165, 0],
+    "Very Poor": [255, 0, 255],
+    "Failed": [255, 0, 0]
+}
+
+data["color"] = data["condition"].map(color_map)
+
+# Count per condition
+summary = data\
+    .drop_duplicates(subset=['road_index'], keep='first')['condition']\
+    .value_counts().reindex(
+    ["Excellent", "Good", "Fair", "Poor", "Very Poor", "Failed"], fill_value=0
+)
+
+st.markdown("Number of roads in each PCI category.")
+
+# Display as colored cards
+cols = st.columns(len(summary))
+for i, (condition, count) in enumerate(summary.items()):
+    r, g, b = color_map[condition]
+    cols[i].markdown(
+        f"""
+        <div style="
+            background-color: rgb({r},{g},{b});
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            color: black;
+            margin-bottom: 10px;
+        ">
+            {condition}<br>{count}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 geojson_data = json.loads(data.to_json())
 
@@ -76,7 +110,6 @@ tooltip = {
         <b>Street:</b> {name}<br>
         <b>Condition:</b> {condition}<br>
         <b>PCI:</b> {pci}<br>
-        <b>Crack Type:</b> {label}
     """,
     "style": {
         "backgroundColor": "steelblue",
@@ -105,7 +138,7 @@ view_state = pdk.ViewState(
 # 4. Render
 deck = pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip=tooltip, map_style="light")
 st.pydeck_chart(deck)
-# --------------------------------------------------------------------------------------------------
+# ---------static map------------------------------------------------------------------------
 # data = data.to_crs(epsg=3857)
 # data.plot(label='condition')
 
