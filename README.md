@@ -28,22 +28,25 @@ PavementEye/
 │
 ├── backend/          # Flask backend (API, logic, model loading)
     │...
-    └── app.py # start point of the backend
+    └── app.py        # start point of the backend
 ├── streamlit/        # Streamlit dashboard (UI and visualization)
     │...
-    └── page 1.py # start point of streamlit dashboard    
+    └── page 1.py     # start point of streamlit dashboard    
 ├── scripts/          # all scripts and commands used in the project
     │...
-    ├── run.ps1 # script to run the project
-    └── spark.py # start point of spark streaming   
+    ├── run.ps1       # script to run the project
+    └── spark.py      # start point of spark streaming   
 ├── data/             # (most of them are hidden, only files needed for run are included)
 ├── models/           # YOLO v8s models and fine tuning
+    │...
+    └── fine_tunning/ # directory contains our fine tuning (weights are hidden)  
 ├── notebooks/        # Jupyter notebooks for analysis and temporary work
 ├── flutter_application_1/
 ├── media/
     │...
     └── Technical_report_PavementEye.pdf
 ├── docker-compose.yml 
+├── compose2.yaml     # alternate compose file for deleted images 
 ├── requirements.txt  # Project dependencies
 └── README.md         # Project overview and setup guide
 ```
