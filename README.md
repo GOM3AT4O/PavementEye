@@ -75,9 +75,9 @@ We leverage our expertise in data science and data engineering to transform coll
 ## 🔄 Data Pipeline
 <div align="center">
   <img 
-  src="media/Flow Chart Whiteboard in Red Blue Basic Style (1).png" 
+  src="media/PavementEye.drawio.png" 
   alt="PavementEye Logo" 
-  width="80%"
+  width="100%"
   />
 </div>
 
