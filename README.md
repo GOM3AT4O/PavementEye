@@ -139,6 +139,11 @@ You can read more information about that here: https://hub.docker.com/r/bitnami/
 
 **Note:** If you want to test cloud storage for images storage please contact yahiamahmoood333@gmail.com to get access credentials that are in hidden `.env` file.
 
+## License
+This project is protected under an “All Rights Reserved” license.  
+No part of this repository may be copied, modified, or distributed without permission.  
+See the [LICENSE](LICENSE) file for more details.
+
 ## 🔗 References
 [1]: Huang, Y.-H., & Zhang, Q.-Y., “A review of the causes and
 effects of pavement distresses”, Construction and Building
