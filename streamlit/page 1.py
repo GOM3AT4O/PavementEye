@@ -18,13 +18,32 @@ def local_css(file_name):
 
 local_css("style.css")
 # ---------------------------------------------------------------------------------
+st.title("🛣️ Pavement eye")
 
 cassandra = Cassandra()
-cassandra.exec("SELECT * FROM crack")
+
+# get dists from the db
+dists = cassandra.exec(f"SELECT DISTINCT dist FROM crack")
+
+dists_list = dists.values.reshape(-1)
+
+countries = st.multiselect("Select districts", options=dists_list, default=['Muntazah'])
+
+# prepare the filters
+dists_filter = ["'" + word + "'" for word in countries]
+dists_filter = ", ".join(dists_filter)
+
+confidence_value = st.slider("Select confidence minimum value", min_value=float(0), max_value=float(1), value=0.5, step=0.05)
+
+cassandra.exec(f"""SELECT * 
+               FROM crack 
+               WHERE dist IN ({dists_filter}) 
+               AND confidence >= {confidence_value}
+               ALLOW FILTERING
+""")
 data = cassandra.join_roads()
 data = data.drop(['geometry', 'index', 'road_index', 'id'], axis=1)
 
-st.title("🛣️ Pavement eye")
 
 # ------------------------------------------------------------------------------
 cassandra.exec("SELECT road_index, label FROM crack")
