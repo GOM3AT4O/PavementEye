@@ -20,12 +20,13 @@ local_css("style.css")
 # ---------------------------------------------------------------------------------
 st.title("🛣️ Pavement eye")
 
+# filters ---------------------------------------------------------------------------
 cassandra = Cassandra()
 
-# get dists from the db
+# get dists from the db (only districts in the database)
 dists = cassandra.exec(f"SELECT DISTINCT dist FROM crack")
 
-dists_list = dists.values.reshape(-1)
+dists_list = dists.values.reshape(-1) # flatten the array
 
 countries = st.multiselect("Select districts", options=dists_list, default=['Muntazah'])
 
