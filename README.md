@@ -52,7 +52,10 @@ PavementEye/
 ```
 
 ## 👁️‍🗨️ What is PavementEye ?
-### Demo Video : https://drive.google.com/file/d/1VcSy9CkCoxucJKjo-kV3TDPwnUh55KS8/view?usp=sharing
+### Demo Video in Arabic: https://drive.google.com/file/d/1YwlugCywoA-7TDtPUhG2Sqd1EKhO7w5V/view?usp=sharing
+
+### Demo Video in English: https://drive.google.com/file/d/1AJqbj6kvekrZlnUmwK3ukQi1raCHPbCU/view?usp=sharing
+
 #### Introduction
 Roads  are  the  most  widely  used  transportation method  around  the  world  at  present.  One  of the causes  of accidents on the roads  is road  distresses [1]. 
 
