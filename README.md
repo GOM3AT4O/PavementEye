@@ -22,7 +22,7 @@
 ![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
 </div>
 
-## 📂 Repository Structure summary
+## 📂 Repository Structure summary  
 ```bash
 PavementEye/
 │
