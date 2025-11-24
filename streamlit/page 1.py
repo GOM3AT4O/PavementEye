@@ -7,6 +7,8 @@ from azure.storage.blob import BlobServiceClient
 import cv2
 from dotenv import load_dotenv
 import os
+from colors import DASHBOARD_PALETTE
+import pandas as pd
 
 # Global styles -------------------------------------------------------------------
 st.set_page_config(layout="wide")
@@ -26,6 +28,28 @@ cassandra = Cassandra()
 # get dists from the db (only districts in the database)
 dists = cassandra.exec(f"SELECT DISTINCT dist FROM crack")
 
+# get max and min confidence from the db
+max_conf = cassandra.exec(f"SELECT max(confidence) as max_conf FROM crack").values[0][0]
+min_conf = cassandra.exec(f"SELECT min(confidence) as min_conf FROM crack").values[0][0]
+
+# get max and min time from the db
+max_ts = cassandra.exec(f"SELECT max(timestamp) FROM crack").values[0][0]
+min_ts = cassandra.exec(f"SELECT min(timestamp) FROM crack").values[0][0]
+
+# Convert numpy.datetime64 to Python datetime.date
+max_date = pd.to_datetime(max_ts).date()
+min_date = pd.to_datetime(min_ts).date()
+
+
+date_range = st.date_input(
+    "Select date range",
+    value=(min_date, max_date),  # default selection
+    min_value=min_date,
+    max_value=max_date
+)
+
+print(date_range)
+
 dists_list = dists.values.reshape(-1) # flatten the array
 
 countries = st.multiselect("Select districts", options=dists_list, default=['Muntazah'])
@@ -34,14 +58,24 @@ countries = st.multiselect("Select districts", options=dists_list, default=['Mun
 dists_filter = ["'" + word + "'" for word in countries]
 dists_filter = ", ".join(dists_filter)
 
-confidence_value = st.slider("Select confidence minimum value", min_value=float(0), max_value=float(1), value=0.5, step=0.05)
+confidence_value = st.slider("Select confidence minimum value", min_value=float(min_conf), max_value=float(max_conf), value=0.5, step=0.05)
+
+
+start_date, end_date = date_range
+
+# Convert to ISO string for Cassandra
+start_iso = start_date.isoformat()
+end_iso = end_date.isoformat()
 
 cassandra.exec(f"""SELECT * 
                FROM crack 
                WHERE dist IN ({dists_filter}) 
                AND confidence >= {confidence_value}
+                AND timestamp >= '{start_iso} 00:00:00' 
+                AND timestamp <= '{end_iso} 11:59:59' 
                ALLOW FILTERING
 """)
+
 data = cassandra.join_roads()
 data = data.drop(['geometry', 'index', 'road_index', 'id'], axis=1)
 
@@ -124,23 +158,32 @@ if image_name:
         st.error(f"Could not load image: {e}")
 
 # ----------------------------------------------------------------------------------
-col1, col2 = st.columns([1, 2])
+col1, col2 = st.columns([1, 1])
 
 with col1:
-  st.markdown("###### Percentage of each crack type")
+  st.markdown("###### Number of each crack type")
   data1 = cassandra.exec("SELECT label FROM crack")
 
-  cmap = plt.get_cmap('Dark2')
-
-  # Get a list of 8 colors from the colormap
-
-  fig, ax = plt.subplots(1, 1)
-
+  
   plot = data1.groupby('label')['label'].count().sort_values()
 
-  colors = cmap(np.linspace(0, 1, len(plot.index)))
-  ax.pie(plot, labels=plot.index, autopct='%.2f%%', colors=colors)
-  st.pyplot(fig)
+  fig = px.bar(
+    x=plot.values,
+    y=plot.index,
+    orientation='h',
+    title="Crack Count by Type",
+    labels={'x': 'Count', 'y': 'Crack Type'},
+    color=plot.index,    
+    color_discrete_sequence=DASHBOARD_PALETTE
+  )
+
+  fig.update_layout(
+    yaxis=dict(categoryorder='total ascending'),   # matches your sort_values()
+    template='plotly_white'
+  )
+
+  st.plotly_chart(fig, use_container_width=True)
+  
 # -----------------------------------------------------------------------------------
 
 grouped_df = data2.groupby(["fclass", "label"]).size().reset_index(name='count')
@@ -154,9 +197,9 @@ with col2:
     grouped_df,
     path=["fclass", "label"],
     values="count",
-    color="fclass",
+    color='fclass',
     title="Distribution of Crack Types Across Road Types",
-    color_discrete_sequence=px.colors.qualitative.Dark24
+    color_discrete_sequence=DASHBOARD_PALETTE
   )
 
   st.plotly_chart(fig, use_container_width=True)

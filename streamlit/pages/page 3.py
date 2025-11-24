@@ -4,6 +4,7 @@ from db import Cassandra
 import plotly.express as px
 import pandas as pd
 import numpy as np
+from colors import DASHBOARD_PALETTE, color_scale
 
 
 # Global styles -------------------------------------------------------------------
@@ -19,7 +20,7 @@ local_css("./style.css")
 cmap = plt.get_cmap('Dark2')
 # ---------------------------------------------------------------------------------
 
-st.title("🌉 Percentage of each crack type for different road structures")
+st.title("🌉 Number of each crack type for different road infrastructure")
 st.markdown("""
 Normal road means road that is not tunnel or bridge.
 """)
@@ -28,49 +29,48 @@ cassandra = Cassandra()
 cassandra.exec("SELECT road_index, label FROM crack")
 df = cassandra.join_roads()
 
-bridge = df[df['bridge'] == 'T'].groupby(['label']).size().rename('count').sort_values()
-tunnel = df[df['tunnel'] == 'T'].groupby(['label']).size().rename('count').sort_values()
+# Group by label
+bridge = df[df['bridge'] == 'T'].groupby('label').size().rename('count').sort_values(ascending=False)
+tunnel = df[df['tunnel'] == 'T'].groupby('label').size().rename('count').sort_values(ascending=False)
+normal = df[(df['bridge'] == 'F') & (df['tunnel'] == 'F')].groupby('label').size().rename('count').sort_values(ascending=False)
 
-normal = df[(df['bridge'] == 'F') & (df['bridge'] == 'F')].groupby(['label']).size().rename('count').sort_values()
+# Helper to create horizontal bar chart
+def plot_hbar(series, title):
+    df_plot = series.reset_index()          # convert Series to DataFrame
+    df_plot.columns = ['Crack Type', 'Count']  # rename columns
 
-colors1 = cmap(np.linspace(0, 1, len(bridge.index)))
-colors2 = cmap(np.linspace(0, 1, len(tunnel.index)))
-colors3 = cmap(np.linspace(0, 1, len(normal.index)))
+    # Map colors using your professional palette
+    color_map = {k: v for k, v in zip(df_plot['Crack Type'], DASHBOARD_PALETTE[:len(df_plot)])}
 
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4), dpi=200)
-ax1.pie(bridge, labels=bridge.index, autopct='%0.2f%%', colors=colors1)
-ax1.set_title("bridge")
-ax2.pie(tunnel, labels=tunnel.index, autopct='%0.2f%%', colors=colors2)
-ax2.set_title("tunnel")
-ax3.pie(normal, labels=normal.index, autopct='%0.2f%%', colors=colors3)
-ax3.set_title("normal")
-st.pyplot(fig)
+    fig = px.bar(
+        df_plot,
+        x='Count',
+        y='Crack Type',
+        orientation='h',
+        text='Count',
+        color='Crack Type',
+        color_discrete_map=color_map,
+        labels={'Count': 'Number of Cracks', 'Crack Type': 'Crack Type'},
+        title=title,
+        template='plotly_white',
+        hover_data={'Count': True, 'Crack Type': True}
+    )
+    fig.update_layout(showlegend=False, height=400)
+    return fig
 
-# ----------------------------------------------------------------------------------------
 
 col1, col2, col3 = st.columns(3)
 
-st.markdown("""
-#### Percentage of each crack type for different road types (Tables)
-""")
-
+# Plot each
 with col1:
-    st.markdown("""
-    ###### Brige
-    """)
-    st.dataframe(bridge)
+    st.plotly_chart(plot_hbar(bridge, "Bridge Cracks"), use_container_width=True)
 
 with col2:
-    st.markdown("""
-    ###### Tunnel
-    """)
-    st.dataframe(tunnel)
+    st.plotly_chart(plot_hbar(tunnel, "Tunnel Cracks"), use_container_width=True)
 
 with col3:
-    st.markdown("""
-    ###### Normal
-    """)
-    st.dataframe(normal)
+    st.plotly_chart(plot_hbar(normal, "Normal Roads Cracks"), use_container_width=True)
+
 # ----------------------------------------------------------------------------------------
 
 col1, col2 = st.columns(2)
@@ -81,8 +81,10 @@ with col1:
     cassandra.join_roads()
     cassandra.calc_pci()
     df = cassandra.data
+    df['road_index'] = df['road_index'].astype(str)
 
     df = df[df['road_index'] != -1]
+
 
     group = df.groupby(['road_index']).agg({
     'name': 'first',
@@ -92,65 +94,68 @@ with col1:
 
     group['name'].fillna(group['road_index'], inplace=True)
 
-    group = group.sort_values(by='pci', ascending=False)
+    plot = group.sort_values(by='pci', ascending=True).iloc[:10]
 
-    top_10_damaged_roads = group['road_index'].to_list()[:10]
+    top_10_damaged_roads = plot['road_index'].to_list()[:10]
 
+    # Horizontal bar chart
     fig = px.bar(
-        group,
-        y='name',
-        x='pci',
-        hover_data=['name', 'pci', 'fclass'],
-        labels={'name': 'Street (road_index)', 'pci': 'PCI', 'fclass': 'Road Type'},
-        title='🚧 Top 10 damaged streets (based on PCI)',
-        color_discrete_sequence=px.colors.qualitative.Dark2
-    )
+    plot,
+    x='pci',
+    y='road_index',   # as roads name may be repeated
+    orientation='h',
+    title="🚧 Top 10 Damaged Roads by PCI",
+    labels={'pci': 'PCI', 'road_index': 'Road Index'},
+    hover_data={'name': True, 'pci': True, 'fclass': True},
+    template='plotly_white',
+    color_discrete_sequence=['#1E3A8A'] 
+)
 
-    fig.update_layout(
-        height=600
-    )
-
+    fig.update_yaxes(categoryorder='array', categoryarray=plot['road_index'])
     st.plotly_chart(fig, use_container_width=True)
 # -----------------------------------------------------------------------------------------
 with col2:
+    # Filter top 10 damaged roads
     top_damaged_df = df[df['road_index'].isin(top_10_damaged_roads)]
 
-    # Step 1: Replace missing names
+    # Replace missing names with road_index
     top_damaged_df['name'] = top_damaged_df['name'].fillna(top_damaged_df['road_index'])
 
-    # Step 2: Create the pivot for counts only
+    # Pivot table: counts of cracks per road and crack type
     pv = pd.pivot_table(
         top_damaged_df,
-        index=['road_index', 'name'],    # include name in index
+        index=['road_index', 'name'],   # include name in index
         columns='label',
         values='geometry',
         aggfunc='count'
     ).fillna(0).astype(int)
 
-    # Step 3: Reset index to flatten
-    pv_reset = pv.reset_index()   # now includes road_index and name as columns
+    # Flatten pivot table
+    pv_reset = pv.reset_index()  # now road_index and name are columns
 
-    # Step 4: Melt to long-form
+    # Melt to long-form for Plotly
     pv_long = pv_reset.melt(
         id_vars=['road_index', 'name'],
         var_name='Crack Type',
         value_name='Count'
     )
 
-    # Step 5: Plot using road name as x-axis
+    # Create stacked horizontal bar chart
     fig = px.bar(
         pv_long,
-        y='name',
+        y='road_index',                # unique identifier
         x='Count',
         color='Crack Type',
-        color_discrete_sequence=px.colors.qualitative.Dark2,
-        title='🛠️ Crack Types for the top 10 damaged roads',
-        labels={'name': 'Road Name (road_index)', 'Count': 'Number of Cracks'},
+        color_discrete_sequence=DASHBOARD_PALETTE,
+        hover_data={'name': True, 'road_index': True, 'Count': True},
+        title='🛠️ Crack Types for the Top 10 Damaged Roads',
+        labels={'road_index': 'Road (ID)', 'Count': 'Number of Cracks'}
     )
 
     fig.update_layout(
         barmode='stack',
-        xaxis={'type': 'category'}
+        yaxis={'categoryorder': 'array', 'categoryarray': top_10_damaged_roads},  # maintain order
+        template='plotly_white',
     )
 
     st.plotly_chart(fig, use_container_width=True)

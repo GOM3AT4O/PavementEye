@@ -2,6 +2,8 @@ import streamlit as st
 from db import Cassandra
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import plotly.express as px
+from colors import DASHBOARD_PALETTE
 
 # Global styles -------------------------------------------------------------------
 st.set_page_config(layout="wide")
@@ -21,83 +23,102 @@ cassandra.exec("SELECT label, road_index FROM crack")
 cassandra.join_roads()
 cracks_df = cassandra.data
 
-col1, col2 = st.columns([2, 1])
 
-with col1:
 
-  st.markdown("##### 🚦 Comparison between different road speeds")
+st.markdown("##### 🚦 Comparison between different road speeds")
 
-  cracks_df = cracks_df[cracks_df['maxspeed'] > 0]
+# Filter valid speeds
+cracks_df = cracks_df[cracks_df['maxspeed'] > 0]
 
-  speed_cracks = (
+  # Group by maxspeed and crack type
+speed_cracks = (
       cracks_df.groupby(["maxspeed", "label"])
       .size()
       .reset_index(name="count")
   )
 
-  pivot_speed = speed_cracks.pivot(
+  # Pivot to have crack types as columns (actual counts)
+pivot_speed = speed_cracks.pivot(
       index="maxspeed", columns="label", values="count"
   ).fillna(0)
 
-  pivot_percent = pivot_speed.div(pivot_speed.sum(axis=1), axis=0) * 100
-
-  pivot_percent = pivot_percent.sort_index()
-
-  fig, ax = plt.subplots(1, 1)
-  pivot_percent.plot(
-      kind="bar",
-      stacked=True,
-      figsize=(12,6),
-      ax=ax,
-      colormap=cmap
+  # Melt to long-form for Plotly
+pivot_long = pivot_speed.reset_index().melt(
+      id_vars='maxspeed',
+      var_name='Crack Type',
+      value_name='Count'
   )
 
-  # Corrected annotation loop
-  counts = cracks_df\
-    .groupby(['maxspeed'])\
-    .size()\
-    .sort_index()\
-    .to_list()
+  # Total counts for annotation
+total_counts = cracks_df.groupby('maxspeed').size().sort_index()
 
-  for i, count in enumerate(counts):
-    # Use the integer index `i` for the x-coordinate
-    ax.annotate(f"{count} cracks", xy=(i, 100), ha='center', va='bottom', fontsize=15)
+  # Map colors to your professional palette
+color_map = {k: v for k, v in zip(pivot_long['Crack Type'].unique(), DASHBOARD_PALETTE)}
 
-  ax.set_title("Percentage of Crack Types per Maxspeed", fontsize=14, fontweight="bold")
-  ax.set_xlabel("Maxspeed in KM/H", fontsize=12)
-  ax.set_ylabel("Percentage (%)", fontsize=12)
-  ax.legend(title="Crack Type")
-  ax.grid(axis="y", linestyle="--", alpha=0.7)
-  st.pyplot(fig)
+  # Plotly stacked horizontal bar chart
+fig = px.bar(
+      pivot_long,
+      x='maxspeed',
+      y='Count',
+      color='Crack Type',
+      color_discrete_map=color_map,
+      text='Count',
+      labels={'maxspeed': 'Maxspeed (KM/H)', 'Count': 'Number of Cracks'},
+      title="Number of Crack Types per Maxspeed",
+      template='plotly_white'
+  )
+
+  # Make bars stacked
+fig.update_layout(
+    barmode='stack',
+    xaxis=dict(type='category', categoryorder='category ascending'),
+    bargap=0,  
+    width=1200,
+    height=600
+)
+  # Add total count annotations above each stack
+for speed in total_counts.index:
+      fig.add_annotation(
+          x=speed,
+          y=total_counts.loc[speed] + 2,  # slightly above total
+          text=f"{total_counts.loc[speed]} cracks",
+          showarrow=False,
+          font=dict(size=12)
+      )
+
+fig.update_layout(width=1200, height=600)
+
+  # Display in Streamlit
+st.plotly_chart(fig, use_container_width=True)
 # ------------------------------------------------------------------------------------------
 
-with col2:
-  st.markdown("##### 🔄 One way roads vs both")
-  df = cassandra.data
 
-  oneway_B = df[df['oneway'] == 'B'].groupby('label').size()
-  oneway_F = df[df['oneway'] == 'F'].groupby('label').size()
+st.markdown("##### 🔄 One way roads vs both")
+df = cassandra.data
+
+oneway_B = df[df['oneway'] == 'B'].groupby('label').size()
+oneway_F = df[df['oneway'] == 'F'].groupby('label').size()
   
 
-  categories_B = oneway_B.index
-  categories_F = oneway_F.index
+categories_B = oneway_B.index
+categories_F = oneway_F.index
 
-  fig = go.Figure()
+fig = go.Figure()
 
-  fig.add_trace(go.Scatterpolar(
+fig.add_trace(go.Scatterpolar(
       r=oneway_B.values,
       theta=categories_B,
       fill='toself',
       name='Both',
   ))
-  fig.add_trace(go.Scatterpolar(
+fig.add_trace(go.Scatterpolar(
       r=oneway_F.values,
       theta=categories_F,
       fill='toself',
       name='False'
   ))
 
-  fig.update_layout(
+fig.update_layout(
       polar=dict(
           radialaxis=dict(
               visible=True,
@@ -107,6 +128,6 @@ with col2:
       showlegend=True
   )
 
-  st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 # -------------------------------------------------------------------------------------
 
