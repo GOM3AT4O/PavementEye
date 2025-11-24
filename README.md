@@ -22,8 +22,8 @@
 ![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?logo=openstreetmap&logoColor=white)
 </div>
 
-## 📂 Repository Structure summary
-```bash
+## 📂 Repository Structure summary  
+```bash 
 PavementEye/
 │
 ├── 🔧backend/          # Flask backend (API, logic, model loading)
@@ -78,7 +78,14 @@ We leverage our expertise in data science and data engineering to transform coll
 ## 🔄 Data Pipeline
 <div align="center">
   <img 
-  src="media/PavementEye.drawio.png" 
+  src="media/diagram1.jpg"  
+  alt="PavementEye Logo" 
+  width="100%"
+  />
+</div>
+<div align="center">
+  <img 
+  src="media/diagram2.png"  
   alt="PavementEye Logo" 
   width="100%"
   />
