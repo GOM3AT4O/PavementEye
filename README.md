@@ -154,7 +154,7 @@ You can read more information about that here: https://hub.docker.com/r/bitnami/
 ## Team work
 | Name         | Actual Work Summary                                                                                       |
 | ------------ | --------------------------------------------------------------------------------------------------------- |
-| **Yahya**    | Team Leader, Data Engineering (Spark, Cassandra, kafka), Computer Vision (fine tuning on EGY_PDD dataset), Cloud Computing (Azure VM and Datalake and Huawei Cloud ECS and OBS), Backend Development and websocket connection, Flutter Development, Streamlit dashboard |
+| **Yahya**    | Team Leader, Data Engineering (Spark, Cassandra, kafka), Docker,Computer Vision (fine tuning on EGY_PDD dataset), Cloud Computing (Azure VM and Datalake and Huawei Cloud ECS and OBS), Backend Development and websocket connection, Flutter Development, Streamlit dashboard |
 | **Mohamed**  | Huawei Cloud, Data Visualization, Streamlit Dashboard, Test Case Support, Video Editing                   |
 | **Rowan**    | Apache Spark, Data Visualization                                                                                      |
 | **Doaa**     | Flutter Development, Apache Spark                                                                         |
