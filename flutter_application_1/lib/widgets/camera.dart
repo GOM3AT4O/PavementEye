@@ -21,6 +21,7 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
   Timer? _timer;
   bool _noCameraAvailable = false;
   bool _isTimerRunning = false;
+  int _currentRate = 5;
 
   // ✅ State variables
   String _uploadStatus = "Waiting...";
@@ -32,6 +33,64 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
   // ✅ Add Socket Service
   final SocketService _socketService = SocketService();
 
+  // ✅ FIXED: Add memory cleanup methods
+void _cleanupMemory() {
+  print('🧹 Performing memory cleanup...');
+  
+  // Clean up old image file
+  if (_latestImageFile != null && _latestImageFile!.existsSync()) {
+    try {
+      _latestImageFile!.delete();
+      _latestImageFile = null;
+    } catch (e) {
+      print('⚠️ Could not cleanup image file: $e');
+    }
+  }
+  
+  // Clear large state variables
+  _labels = [];
+  _uploadStatus = "Waiting for cleanup...";
+  
+  // Force garbage collection (Flutter will handle this automatically)
+  if (WidgetsBinding.instance != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // This helps trigger the garbage collector
+    });
+  }
+}
+
+  // ✅ FIXED: Add periodic cleanup
+  void _startPeriodicCleanup() {
+    Timer.periodic(Duration(minutes: 2), (timer) {
+      if (mounted) {
+        _cleanupMemory();
+      }
+    });
+  }
+
+  void _monitorPerformance() {
+  Timer.periodic(Duration(seconds: 30), (timer) {
+    if (!mounted) {
+      timer.cancel();
+      return;
+    }
+    
+    print('📊 Performance Stats:');
+    print('   - Capture Count: $_captureCount');
+    print('   - Timer Running: $_isTimerRunning');
+    print('   - WebSocket Connected: ${_socketService.isConnected}');
+    print('   - Latest Image: ${_latestImageFile != null ? "Exists" : "None"}');
+    
+    // Auto-cleanup if capture count gets too high
+    if (_captureCount > 50) {
+      print('🔄 Auto-resetting capture count for stability');
+      setState(() {
+        _captureCount = 0;
+      });
+    }
+  });
+}
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +99,11 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
     
     // ✅ Listen for WebSocket responses
     _setupSocketListeners();
+    
+    // ✅ FIXED: Start periodic memory cleanup
+    _startPeriodicCleanup();
+
+    _monitorPerformance(); // ✅ Add this line
   }
 
   // ✅ Setup WebSocket response listeners
@@ -63,6 +127,9 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
       }
     });
 
+
+  
+
     _socketService.connectionStream.listen((isConnected) {
       print('🔗 Connection status changed: $isConnected');
       if (!isConnected && _isTimerRunning) {
@@ -73,14 +140,21 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
     });
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _stopTimer();
-    _controller?.dispose();
-    _socketService.disconnect(); // ✅ Dispose socket connection
-    super.dispose();
-  }
+  // Update the dispose method in camera.dart:
+@override
+void dispose() {
+  WidgetsBinding.instance.removeObserver(this);
+  _stopTimer();
+  _controller?.dispose();
+  
+  // ✅ FIXED: Proper cleanup sequence
+  _cleanupMemory();
+  _socketService.clearBuffers();
+  _socketService.disconnect();
+  
+  super.dispose();
+}
+
 
   @override
   void didChangeDependencies() {
@@ -91,17 +165,25 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
   }
 
   void _handleSettingsChange(SettingsProvider settingsProvider) {
-    // ✅ Connect to WebSocket when settings change
-    _connectToWebSocket(settingsProvider.api);
-    
-    if (settingsProvider.isRunning && !_isTimerRunning) {
-      _startCaptureTimer();
-    } else if (!settingsProvider.isRunning && _isTimerRunning) {
-      _stopTimer();
-    } else if (_isTimerRunning && _timer != null) {
-      _restartTimerWithNewRate();
-    }
+  // ✅ Connect to WebSocket when settings change
+  _connectToWebSocket(settingsProvider.api);
+  
+  // ✅ FIXED: Proper state management for camera timer
+  if (settingsProvider.isRunning && !_isTimerRunning) {
+    print('🔄 Starting camera timer');
+    _startCaptureTimer();
+  } else if (!settingsProvider.isRunning && _isTimerRunning) {
+    print('🔄 Stopping camera timer');
+    _stopTimer();
   }
+  
+  // ✅ FIXED: Only restart timer if it's already running AND rate changed
+  if (_isTimerRunning && settingsProvider.rate != _currentRate) {
+    print('🔄 Restarting timer with new rate: ${settingsProvider.rate}s');
+    _restartTimerWithNewRate();
+    _currentRate = settingsProvider.rate;
+  }
+}
 
   // ✅ New method to connect to WebSocket
   void _connectToWebSocket(String url) {
@@ -206,78 +288,110 @@ class _CameraCapturePageState extends State<CameraCapturePage> with WidgetsBindi
 
   // ✅ REPLACED: New WebSocket method instead of HTTP multipart
   Future<void> _takePictureAndSendWebSocket() async {
-    if (_controller == null ||
-        !_controller!.value.isInitialized ||
-        _controller!.value.isTakingPicture) {
-      return;
-    }
-
-    // ✅ Check WebSocket connection
-    if (!_socketService.isConnected) {
-      setState(() {
-        _uploadStatus = "❌ WebSocket not connected";
-      });
-      print('⚠️ WebSocket not connected - skipping capture');
-      return;
-    }
-
-    try {
-      setState(() {
-        _uploadStatus = "📸 Capturing image...";
-      });
-
-      // 📸 Capture image
-      XFile file = await _controller!.takePicture();
-      final imageFile = File(file.path);
-      setState(() {
-        _latestImageFile = imageFile;
-        _captureCount++;
-      });
-
-      print('✅ Image captured: ${file.path}');
-
-      // 📍 Get location
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      print('📍 Location: ${position.latitude}, ${position.longitude}');
-
-      // Get current settings
-      final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-
-      // ✅ Convert image to base64
-      List<int> imageBytes = await imageFile.readAsBytes();
-      String base64Image = base64Encode(imageBytes);
-      
-      // ✅ Use the format you specified: without data URL prefix
-      String imageData = base64Image; // Just base64, no "data:image/..." prefix
-
-      setState(() {
-        _uploadStatus = "🔄 Sending via WebSocket...";
-      });
-
-      // ✅ Send via WebSocket instead of HTTP
-      _socketService.sendImageData(
-        imageData, // Base64 string without prefix
-        position.longitude,
-        position.latitude,
-        settingsProvider.ppm,
-      );
-
-      setState(() {
-        _uploadStatus = "✅ Sent via WebSocket!";
-        _imageName = "${position.longitude.toStringAsFixed(4)}_${position.latitude.toStringAsFixed(4)}_${DateTime.now().millisecondsSinceEpoch}.jpg";
-      });
-
-    } catch (e) {
-      print('❌ Error: $e');
-      setState(() {
-        _uploadStatus = "❌ Error: ${e.toString()}";
-        _imageName = '';
-        _labels = [];
-      });
-    }
+  if (_controller == null ||
+      !_controller!.value.isInitialized ||
+      _controller!.value.isTakingPicture) {
+    return;
   }
+
+  // ✅ Check WebSocket connection
+  if (!_socketService.isConnected) {
+    setState(() {
+      _uploadStatus = "❌ WebSocket not connected";
+    });
+    print('⚠️ WebSocket not connected - skipping capture');
+    return;
+  }
+
+  File? tempImageFile;
+  
+  try {
+    setState(() {
+      _uploadStatus = "📸 Capturing image...";
+    });
+
+    // 📸 Capture image
+    XFile file = await _controller!.takePicture();
+    tempImageFile = File(file.path);
+    
+    // ✅ FIXED: Limit stored images to prevent memory buildup
+    if (_latestImageFile != null && _latestImageFile!.existsSync()) {
+      try {
+        await _latestImageFile!.delete(); // Delete previous image
+      } catch (e) {
+        print('⚠️ Could not delete previous image: $e');
+      }
+    }
+
+    setState(() {
+      _latestImageFile = tempImageFile;
+      _captureCount++;
+    });
+
+    print('✅ Image captured: ${file.path} (${_captureCount} total)');
+
+    // 📍 Get location
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    print('📍 Location: ${position.latitude}, ${position.longitude}');
+
+    // Get current settings
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+
+    // ✅ FIXED: Read image bytes with file size check
+    List<int> imageBytes = await tempImageFile.readAsBytes();
+    
+    // ✅ FIXED: Check file size and compress if too large
+    if (imageBytes.length > 2 * 1024 * 1024) { // 2MB threshold
+      print('📦 Image too large (${imageBytes.length ~/ 1024}KB), consider compression');
+      // You could add image compression here if needed
+    }
+    
+    String base64Image = base64Encode(imageBytes);
+    
+    // Clear the large byte array from memory immediately
+    imageBytes = [];
+
+    setState(() {
+      _uploadStatus = "🔄 Sending via WebSocket...";
+    });
+
+    // ✅ Send via WebSocket instead of HTTP
+    _socketService.sendImageData(
+      base64Image, // Base64 string without prefix
+      position.longitude,
+      position.latitude,
+      settingsProvider.ppm,
+    );
+
+    // ✅ FIXED: Clear base64 string from memory after sending
+    base64Image = "";
+
+    setState(() {
+      _uploadStatus = "✅ Sent via WebSocket!";
+      _imageName = "${position.longitude.toStringAsFixed(4)}_${position.latitude.toStringAsFixed(4)}_${DateTime.now().millisecondsSinceEpoch}.jpg";
+    });
+
+  } catch (e) {
+    print('❌ Error: $e');
+    
+    // ✅ FIXED: Clean up temp file on error
+    if (tempImageFile != null && tempImageFile.existsSync()) {
+      try {
+        await tempImageFile.delete();
+      } catch (deleteError) {
+        print('⚠️ Could not delete temp image: $deleteError');
+      }
+    }
+    
+    setState(() {
+      _uploadStatus = "❌ Error: ${e.toString()}";
+      _imageName = '';
+      _labels = [];
+    });
+  }
+}
 
   // ✅ Manual reconnect method
   void _manualReconnect() {

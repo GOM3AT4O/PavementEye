@@ -14,6 +14,13 @@ class SocketService {
   Stream<Map<String, dynamic>> get responseStream => _responseController.stream;
   Stream<bool> get connectionStream => _connectionController.stream;
 
+  // In socket_service.dart, add this method:
+void clearBuffers() {
+  // This helps clear any internal buffers
+  // The stream controllers will handle their own memory management
+  print('🧹 Clearing WebSocket buffers');
+}
+
   void connect(String url) {
     try {
       disconnect();

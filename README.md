@@ -83,13 +83,6 @@ We leverage our expertise in data science and data engineering to transform coll
   width="100%"
   />
 </div>
-<div align="center">
-  <img 
-  src="media/diagram2.png"  
-  alt="PavementEye Logo" 
-  width="100%"
-  />
-</div>
 
 As part of **"Huawei Developer Competition Northern Africa 2025"**, We used Huawei OBS and Huawei ECS, To use Huawei OBS other than Azure Data lake go to `backend/model.py` at the end of the file and uncomment or comment based on want you want to use (Azure data lake or Huawei OBS). The system was also deployed on both Huawei ECS and Azure VM.
 
@@ -131,7 +124,9 @@ cd PavementEye
 pip install -r requirements.txt
 ```
 
-3. Just type this in terminal and every thing will be ready:
+3. Before you run the system, create a cassandra keysapce and table. The details of creation can be found in `scripts/cassandra.cql`. It contains all queries used for the creation.
+
+4. Just type this in terminal and every thing will be ready:
 ```powershell
 cd scripts
 ./run.ps1
@@ -146,8 +141,25 @@ docker compose -f compose2.yaml up -d
 
 You can read more information about that here: https://hub.docker.com/r/bitnami/spark
 
-
 **Note:** If you want to test cloud storage for images storage please contact yahiamahmoood333@gmail.com to get access credentials that are in hidden `.env` file.
+
+## Work timeline
+<div align="center">
+  <img 
+  src="media/PavementEye approx timeline-2025-11-20-110905.svg" 
+  alt="PavementEye Logo" 
+  width="100%"/>
+</div>
+
+## Team work
+| Name         | Actual Work Summary                                                                                       |
+| ------------ | --------------------------------------------------------------------------------------------------------- |
+| **Yahya**    | Team Leader, Data Engineering, Computer Vision, Cloud Computing, Backend Development, Flutter Development |
+| **Mohamed**  | Huawei Cloud, Data Visualization, Streamlit Dashboard, Test Case Support, Video Editing                   |
+| **Rowan**    | *Apache Spark, Data Visualization*                                                                                      |
+| **Doaa**     | Flutter Development, Apache Spark                                                                         |
+| **Salsabel** | Apache Spark, Data Visualization                                                                          |
+
 
 ## License
 This project is protected under an “All Rights Reserved” license.  
