@@ -18,3 +18,5 @@ cassandra-driver
 scipy
 pydeck
 flask_socketio
+PyPDF2
+google-genai
