@@ -6,6 +6,9 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 import time
+from db import Cassandra
+
+cassandra = Cassandra()
 
 # --- PAGE CONFIG & GLOBAL AVATAR REMOVAL ---
 st.set_page_config(page_title="PavementEye Brain", layout="wide")
@@ -244,43 +247,43 @@ if not api_key:
     st.error("❌ API Key not found. Please create a .env file.")
     st.stop()
 
-# --- 3. DATABASE CONNECTION ---
-def get_db_summary():
-    """Connects to Cassandra and gets live stats."""
-    try:
-        try:
-            from db import Cassandra
-        except ImportError:
-            sys.path.append(os.path.join(project_root, 'streamlit'))
-            from db import Cassandra
+# # --- 3. DATABASE CONNECTION ---
+# def get_db_summary():
+#     """Connects to Cassandra and gets live stats."""
+#     try:
+#         try:
+#             from db import Cassandra
+#         except ImportError:
+#             sys.path.append(os.path.join(project_root, 'streamlit'))
+#             from db import Cassandra
 
-        db = Cassandra(CASSANDRA_HOST=db_host)
-        db.exec("SELECT * FROM detections LIMIT 1000") 
+#         db = Cassandra(CASSANDRA_HOST=db_host)
+#         db.exec("SELECT * FROM detections LIMIT 1000") 
         
-        if db.data is None or db.data.empty:
-            return "\n[Database connected but no data found in 'detections' table.]\n"
+#         if db.data is None or db.data.empty:
+#             return "\n[Database connected but no data found in 'detections' table.]\n"
 
-        db.join_roads()
-        processed_df = db.calc_pci()
+#         db.join_roads()
+#         processed_df = db.calc_pci()
         
-        total_roads = len(processed_df['road_index'].unique())
-        avg_pci = processed_df['pci'].mean()
-        conditions = processed_df['condition'].value_counts().to_dict()
-        worst_roads = processed_df[processed_df['pci'] < 40][['road_index', 'pci', 'condition']].head(3).to_dict('records')
+#         total_roads = len(processed_df['road_index'].unique())
+#         avg_pci = processed_df['pci'].mean()
+#         conditions = processed_df['condition'].value_counts().to_dict()
+#         worst_roads = processed_df[processed_df['pci'] < 40][['road_index', 'pci', 'condition']].head(3).to_dict('records')
 
-        summary = f"""
-        --- LIVE DATABASE CONTEXT ---
-        - Total Roads Scanned: {total_roads}
-        - Network Average PCI: {round(avg_pci, 2)}
-        - Condition Breakdown: {conditions}
-        - Critical Roads: {worst_roads}
-        -----------------------------
-        """
-        return summary
+#         summary = f"""
+#         --- LIVE DATABASE CONTEXT ---
+#         - Total Roads Scanned: {total_roads}
+#         - Network Average PCI: {round(avg_pci, 2)}
+#         - Condition Breakdown: {conditions}
+#         - Critical Roads: {worst_roads}
+#         -----------------------------
+#         """
+#         return summary
 
-    except Exception as e:
-        print(f"DB Error: {e}")
-        return "\n[Database context unavailable]\n"
+#     except Exception as e:
+#         print(f"DB Error: {e}")
+#         return "\n[Database context unavailable]\n"
 
 # --- 4. PDF LOADER FUNCTION (NEW) ---
 def load_all_pdfs_from_media(media_directory):
@@ -337,22 +340,11 @@ def load_knowledge_base():
     You are the Senior AI Engineer and Expert Analyst for PavementEye.
     
     CORE CAPABILITIES:
-    1. Deep Technical Understanding: Answer questions using the documentation below as your foundation.
-    2. Intelligent Reasoning: For complex questions not directly covered in the docs, use logical inference based on:
-       - The project's technical architecture
-       - Saudi Vision 2030 alignment principles
-       - Infrastructure optimization best practices
-       - Road maintenance industry standards
-       - Cost-benefit analysis frameworks
-    3. Team Recognition: Pay close attention to the "Team Actual Work and Roles" table. ALWAYS use full names when discussing team members.
-    4. Contextual Analysis: Synthesize information across multiple sections to provide comprehensive insights.
-    
-    REASONING GUIDELINES:
-    - If a question requires knowledge beyond the docs, clearly state "Based on the project architecture and industry standards..."
-    - For strategic questions, consider Vision 2030 goals, budget optimization, and scalability
-    - For technical questions, infer from the documented tech stack and design patterns
-    - For policy questions, align with Saudi infrastructure modernization initiatives
-    - Always provide actionable insights, not just facts
+    1. Answer admin questions based on provided cassandra data. Such as 
+    questions about damaged roads, their characteristics.
+    2. Give definitions of some terms if asked like PCI.
+    3. Answer questions about our system PavementEye
+    4. Consider Egypt vision 2030, sustainability.
     
     RESPONSE QUALITY:
     - Be thorough and analytical for complex questions
@@ -376,7 +368,9 @@ def load_knowledge_base():
         print(f"⚠️ README not found at: {readme_path}")
 
     # 3. Load Database
-    context += get_db_summary()
+    cassandra.exec("SELECT * FROM crack")
+    database = cassandra.join_roads()
+    context += "\n\n--- DATABASE CONTENT ---\n" + str(database)
     
     return context
 
