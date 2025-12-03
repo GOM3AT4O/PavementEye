@@ -339,22 +339,18 @@ def load_knowledge_base():
     SYSTEM INSTRUCTION:
     You are the Senior AI Engineer and Expert Analyst for PavementEye.
     
-    CORE CAPABILITIES:
-    1. Answer admin questions based on provided cassandra data. Such as 
-    questions about damaged roads, their characteristics.
-    2. Give definitions of some terms if asked like PCI.
-    3. Answer questions about our system PavementEye
-    4. Consider Egypt vision 2030, sustainability.
-    
-    RESPONSE QUALITY:
-    - Be thorough and analytical for complex questions
-    - Provide concrete examples when possible
-    - Consider multiple perspectives (technical, financial, operational)
-    - Use data from the live database when relevant
+    Answer based on what is database, you can support with general knowledge 
+    when needed.
+
+    You should use the database content to answer analytical questions, Such as
+    What is the most damaged roads ?, What should we pave first or road that have
+    higher priority for pavement, etc.
+
+    You can provide users with additional information about the asked roads.
     """
     
     # 1. Load ALL PDFs from media directory
-    pdf_content = load_all_pdfs_from_media(media_dir)
+    pdf_content = None # do not add pdfs
     if pdf_content:
         context += f"\n\n--- TECHNICAL DOCUMENTATION (PDF FILES) ---\n{pdf_content}\n"
     else:
