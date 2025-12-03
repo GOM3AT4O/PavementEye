@@ -100,9 +100,11 @@ As part of **"Huawei Developer Competition Northern Africa 2025"**, We used Huaw
 
 6. Automatically computes PCI to assess surface degradation and prioritize maintenance.
 
+7. AI chatbot to make the analysis easier and enrich it.
+
 <div align="center">
   <img 
-  src="media/dashboard.png" 
+  src="media/Untitled design (3).png" 
   alt="PavementEye Logo" 
   width="80%"
   />
@@ -155,7 +157,7 @@ You can read more information about that here: https://hub.docker.com/r/bitnami/
 | Name         | Actual Work Summary                                                                                       |
 | ------------ | --------------------------------------------------------------------------------------------------------- |
 | **Yahya**    | Team Leader, Data Engineering (Spark, Cassandra, kafka), Docker,Computer Vision (fine tuning on EGY_PDD dataset), Cloud Computing (Azure VM and Datalake and Huawei Cloud ECS and OBS), Backend Development and websocket connection, Flutter Development, Streamlit dashboard |
-| **Mohamed**  | Huawei Cloud, Data Visualization, Streamlit Dashboard, Test Case Support, Video Editing                   |
+| **Mohamed**  | Huawei Cloud, Data Visualization, Streamlit Dashboard, Test Case Support, Video Editing, AI Chatbot                  |
 | **Rowan**    | Apache Spark, Data Visualization                                                                                      |
 | **Doaa**     | Flutter Development, Apache Spark                                                                         |
 | **Salsabel** | Apache Spark, Data Visualization                                                                          |
