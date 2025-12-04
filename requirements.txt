@@ -20,3 +20,4 @@ pydeck
 flask_socketio
 PyPDF2
 google-genai
+eventlet
