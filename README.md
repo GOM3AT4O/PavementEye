@@ -78,7 +78,7 @@ We leverage our expertise in data science and data engineering to transform coll
 ## 🔄 Data Pipeline
 <div align="center">
   <img 
-  src="media/diagram1.jpg"  
+  src="media/diagram12.png"  
   alt="PavementEye Logo" 
   width="100%"
   />
