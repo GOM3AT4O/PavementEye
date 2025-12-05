@@ -186,15 +186,12 @@ You can read more information about that here: https://hub.docker.com/r/bitnami/
 
 **Note:** If you want to test cloud storage for images storage please contact yahiamahmoood333@gmail.com to get access credentials that are in hidden `.env` file.
 
-## Work timeline
-<div align="center">
-  <img 
-  src="media/PavementEye approx timeline-2025-11-20-110905.svg" 
-  alt="PavementEye Logo" 
-  width="100%"/>
-</div>
+---
 
-## Team work
+## 📅 Work Timeline
+<div align="center"> <img src="media/PavementEye approx timeline-2025-11-20-110905.svg" alt="Project Timeline" width="100%"/> </div>
+
+## 👥 The Team
 | Name         | Actual Work Summary                                                                                       |
 | ------------ | --------------------------------------------------------------------------------------------------------- |
 | **Yahya**    | Team Leader, Data Engineering (Spark, Cassandra, kafka), Docker,Computer Vision (fine tuning on EGY_PDD dataset), Cloud Computing (Azure VM and Datalake and Huawei Cloud ECS and OBS), Backend Development and websocket connection, Flutter Development, Streamlit dashboard |
@@ -203,11 +200,8 @@ You can read more information about that here: https://hub.docker.com/r/bitnami/
 | **Doaa**     | Flutter Development, Apache Spark                                                                         |
 | **Salsabel** | Apache Spark, Data Visualization                                                                          |
 
+---
 
-## License
-This project is protected under an “All Rights Reserved” license.  
-No part of this repository may be copied, modified, or distributed without permission.  
-See the [LICENSE](LICENSE) file for more details.
 
 ## 🔗 References
 [1]: Huang, Y.-H., & Zhang, Q.-Y., “A review of the causes and
@@ -231,5 +225,13 @@ pp. 38509–38544, Sep 2025.
 [5]: [Open street map dataset (Collected by geofabrik)](https://download.geofabrik.de/africa/egypt.html)
 
 [6]: [More info about EGY_PDD dataset](https://psu.edu.eg/en/egy_pdd-dataset/)
+
+---
+
+## 📄License
+This project is protected under an “All Rights Reserved” license.  
+No part of this repository may be copied, modified, or distributed without permission.  
+See the [LICENSE](LICENSE) file for more details.
+
 
 [7]: [Egyptian administration levels dataset](https://data.humdata.org/dataset/cod-ab-egy)
