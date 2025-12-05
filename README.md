@@ -1,11 +1,6 @@
 <div align="center">
 
-# 👁️‍🗨️ PavementEye
-### Automated Road Distress Detection & Classification System
-
-<img src="media/Gemini_Generated_Image_yldkbmyldkbmyldk.png" alt="PavementEye Logo" width="180" style="border-radius: 50%; object-fit: cover; box-shadow: 0px 0px 20px rgba(0,0,0,0.2);" />
-
-<br/><br/>
+![PavementEye Header](./media/pavementeye-header.svg)
 
 ![Python](https://img.shields.io/badge/Python-3.11.7-blue?logo=python&logoColor=white)
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF?logo=ultralytics&logoColor=black)
