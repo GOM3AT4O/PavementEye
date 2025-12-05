@@ -1,0 +1,102 @@
+<svg width="800" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Animated gradient for title -->
+    <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffdb3b;stop-opacity:1">
+        <animate attributeName="stop-color" values="#ffdb3b;#fe53bb;#8f51ea;#0044ff;#ffdb3b" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="33%" style="stop-color:#fe53bb;stop-opacity:1">
+        <animate attributeName="stop-color" values="#fe53bb;#8f51ea;#0044ff;#ffdb3b;#fe53bb" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="66%" style="stop-color:#8f51ea;stop-opacity:1">
+        <animate attributeName="stop-color" values="#8f51ea;#0044ff;#ffdb3b;#fe53bb;#8f51ea" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#0044ff;stop-opacity:1">
+        <animate attributeName="stop-color" values="#0044ff;#ffdb3b;#fe53bb;#8f51ea;#0044ff" dur="5s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- Animated gradient for subtitle -->
+    <linearGradient id="subtitleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8f51ea;stop-opacity:1">
+        <animate attributeName="stop-color" values="#8f51ea;#0044ff;#ffdb3b;#fe53bb;#8f51ea" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" style="stop-color:#fe53bb;stop-opacity:1">
+        <animate attributeName="stop-color" values="#fe53bb;#8f51ea;#0044ff;#ffdb3b;#fe53bb" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" style="stop-color:#0044ff;stop-opacity:1">
+        <animate attributeName="stop-color" values="#0044ff;#ffdb3b;#fe53bb;#8f51ea;#0044ff" dur="5s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Strong glow for eye -->
+    <filter id="eyeGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Stars pattern -->
+    <pattern id="stars" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+      <circle cx="5" cy="5" r="1" fill="white" opacity="0.3"/>
+      <circle cx="25" cy="15" r="0.5" fill="white" opacity="0.5"/>
+      <circle cx="40" cy="30" r="0.8" fill="white" opacity="0.4"/>
+      <circle cx="15" cy="40" r="0.6" fill="white" opacity="0.3"/>
+      <animateTransform
+        attributeName="patternTransform"
+        type="translate"
+        from="0 0"
+        to="0 50"
+        dur="20s"
+        repeatCount="indefinite"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="200" fill="#0d1117"/>
+  
+  <!-- Stars background -->
+  <rect width="800" height="200" fill="url(#stars)" opacity="0.6"/>
+  
+  <!-- Title container background with border -->
+  <rect x="200" y="30" width="400" height="70" rx="35" fill="none" stroke="url(#titleGradient)" stroke-width="3" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="203" y="33" width="394" height="64" rx="32" fill="#1a1a1a" opacity="0.9"/>
+  
+  <!-- Main title -->
+  <text x="400" y="77" font-family="'Courier New', monospace" font-size="36" font-weight="bold" letter-spacing="2" fill="url(#titleGradient)" filter="url(#glow)" text-anchor="middle">
+    PavementEye
+  </text>
+  
+  <!-- Subtitle container background with border -->
+  <rect x="100" y="120" width="600" height="55" rx="28" fill="none" stroke="url(#subtitleGradient)" stroke-width="2.5" opacity="0.7">
+    <animate attributeName="opacity" values="0.7;0.9;0.7" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="103" y="123" width="594" height="49" rx="25" fill="#1a1a1a" opacity="0.85"/>
+  
+  <!-- Subtitle text -->
+  <text x="400" y="154" font-family="Arial, sans-serif" font-size="18" font-weight="500" letter-spacing="1" fill="url(#subtitleGradient)" filter="url(#glow)" text-anchor="middle">
+    Automated Road Distress Detection &amp; Classification System
+  </text>
+  
+  <!-- Glowing circles behind title -->
+  <circle cx="400" cy="65" r="150" fill="#fe53bb" opacity="0.1" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.1;0.2;0.1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="400" cy="65" r="120" fill="#8f51ea" opacity="0.15" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.15;0.25;0.15" dur="4s" begin="1s" repeatCount="indefinite"/>
+  </circle>
+</svg>
